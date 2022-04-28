@@ -27,7 +27,8 @@ app.post('/participants', (req,res) => {
     }
 
     let usersList = getUserList()
-    let userAlreadyExiste = usersList.find( user => user.name === theUser.name) 
+    console.log(usersList)
+    let userAlreadyExiste = usersList.find( user => user.name === theUser) 
     if(!userAlreadyExiste){
         res.status(409).send('User Already Existe')
         return
@@ -65,10 +66,12 @@ function registerUser(user) {
         });
     }
 function getUserList(){
+        console.log(`Dentro da Funcao getUserList`)
         let userslist
         db.collection("users").find().toArray().then(users => {
             userslist = users;
         });
+        console.log(`Requisao do DB`,userslist)
         return userslist
     }
 function getMessagesList(){
