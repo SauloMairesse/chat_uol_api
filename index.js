@@ -36,6 +36,15 @@ app.post('/participants', (req,res) => {
     registerUser(theUser)
     res.status(201).send('The User has been registred')
 })
+function getUserList(){
+        console.log(`Dentro da Funcao getUserList`)
+        let userslist
+        db.collection("users").find().toArray().then(users => {
+            userslist = users;
+        });
+        console.log(`requisição do DB`,userslist)
+        return userslist
+    }
 
 //Get participants
 app.get('/participants', (req, res) => {
@@ -56,7 +65,6 @@ app.get('/messagens', (req, res) => {
 //     const message = req.body
 // })
 
-
 // Functions
 function registerUser(user) {
     db.collection("users").insertOne(
@@ -64,15 +72,6 @@ function registerUser(user) {
             name: `${user}`,
             lastStatus: Date.now()
         });
-    }
-function getUserList(){
-        console.log(`Dentro da Funcao getUserList`)
-        let userslist
-        db.collection("users").find().toArray().then(users => {
-            userslist = users;
-        });
-        console.log(`Requisao do DB`,userslist)
-        return userslist
     }
 function getMessagesList(){
         let listMessages
