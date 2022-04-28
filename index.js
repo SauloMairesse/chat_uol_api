@@ -17,6 +17,7 @@ mongoClient.connect().then(() => {
     db = mongoClient.db("UOL_DB");
 });
 
+//Post User
 app.post('/participants', (req,res) => {
     const theUser = req.body.name
     console.log(theUser)
@@ -35,53 +36,76 @@ app.post('/participants', (req,res) => {
     res.status(201).send('The User has been registred')
 })
 
+//Get participants
 app.get('/participants', (req, res) => {
     let userList = getUserList()
-    res.status(201).send('OK')
+    res.status(201).send(userList)
 } )
 
+//Get Mensagens
+app.get('/messagens', (req, res) => {
+    const limit = parseInt(req.query.limit)
+    const user = req.header.user
+    let listMesages = getMessagesList()
+    res.status(201).send(listMesages)
+} )
+
+// app.post('/messages', (req, res) => {
+//     const user = req.headers.user
+//     const message = req.body
+// })
+
+
+// Functions
 function registerUser(user) {
     db.collection("users").insertOne(
         {
             name: `${user}`,
             lastStatus: Date.now()
         });
-}
+    }
 function getUserList(){
-    let userslist
-    db.collection("users").find().toArray().then(users => {
-        userslist = users;
-    });
-    return userslist
-}
-
-
-app.get('/messages?limit=50', (req,res) => {
-    const limit = parseInt(req.query.limit)
-    const user = req.header.user
-
-} )
-
-app.post('/')
+        let userslist
+        db.collection("users").find().toArray().then(users => {
+            userslist = users;
+        });
+        return userslist
+    }
+function getMessagesList(){
+        let listMessages
+        db.collection("messages").find().toArray().then(messages => {
+            listMessages = messages // array de usuários
+        });
+        return listMessages
+    }
+function toSendMenssage(from,to,text,type){
+        db.collection("messages").insertOne(
+            {
+                from: `${from}}`,
+                to: `${to}`,
+                text: `${text}`,
+                type:`${type}`
+            });
+    }
 
 // DATABASE
     //inserire um dado
-db.collection("users").insertOne({
-	email: "joao@email.com",
-	password: "minha_super_senha"
-});
+// db.collection("users").insertOne({
+// 	email: "joao@email.com",
+// 	password: "minha_super_senha"
+// });
 
     //Comando para buscar no DB
-db.coleçao.find( { oqQuero: 'pipipipopopo' } );
+// db.coleçao.find( { oqQuero: 'pipipipopopo' } );
     
     //Fazendo busca no DB
-db.collection("users").findOne({
-	email: "joao@email.com"
-}).then(user => {
-	console.log(user); // imprimirá um objeto { "_id": ..., "email": ..., "password": ... } 
-});
+// db.collection("users").findOne({
+// 	email: "joao@email.com"
+// }).then(user => {
+// 	console.log(user); // imprimirá um objeto { "_id": ..., "email": ..., "password": ... } 
+// });
 
     //Listar todos os documentos da coleção
-db.collection("users").find().toArray().then(users => {
-    console.log(users); // array de usuários
-});
+// db.collection("users").find().toArray().then(users => {
+//     console.log(users); // array de usuários
+// });
