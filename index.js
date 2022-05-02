@@ -8,106 +8,73 @@ const app = express()
 app.use(cors())
 app.use(json())
 app.listen(5000, () => {
-    console.log(chalk.bold.green('Servidor UOl online : porta 5000'))
+    console.log(chalk.bold.green('--------------------------\nExpress:UOl online : porta 5000'))
 })
 
-let db;
-const mongoClient = new MongoClient("mongodb://localhost:27017");
-mongoClient.connect().then(() => {
-    db = mongoClient.db("UOL_DB");
-});
-
-//Post User
-app.post('/participants', (req,res) => {
-    const theUser = req.body.name
-    console.log(theUser)
-    if(!theUser){  //user === ''
-        res.status(422).send('Erro')
-        return
-    }
-
-    let usersList = getUserList()
-    console.log(usersList)
-    let userAlreadyExiste = usersList.find( user => user.name === theUser) 
-    if(!userAlreadyExiste){
-        res.status(409).send('User Already Existe')
-        return
-    }
-    registerUser(theUser)
-    res.status(201).send('The User has been registred')
-})
-function getUserList(){
-        console.log(`Dentro da Funcao getUserList`)
-        let userslist
-        db.collection("users").find().toArray().then(users => {
-            userslist = users;
-        });
-        console.log(`requisição do DB`,userslist)
-        return userslist
-    }
+//MONGO
+let database = null
+const mongoClient = new MongoClient("mongodb://localhost:27017")
+const promise = mongoClient.connect();
+promise.then( () => {
+    console.log(chalk.bold.green('Mongo: successful connection\n--------------------------'))
+    database = mongoClient.db('UOL_DB')
+} )
+promise.catch(e => console.log(chalk.bold.red('Deu ruim conectar no Mongo',e)))
 
 //Get participants
-app.get('/participants', (req, res) => {
-    let userList = getUserList()
-    res.status(201).send(userList)
+app.get('/participants', async (req, res) => {
+    try {
+        const participants = await database.collection('participants').find().toArray()
+        console.log(chalk.bold.green('Requisição Get /participants Feita'))
+        res.send(participants)
+    } catch (err){
+        console.log(chalk.bold.red('Erro Get /participants'))
+        res.status(500).send( { error: err.message } )
+    }
 } )
+
+//Post participants
+app.post('/participants', async (req,res) => {
+    const {name} = req.body
+    console.log(chalk.bold.yellow('Nome participante: ',name))
+    const participante = {
+        name: `${name}`,
+        lastStatus: Date.now()
+        }
+    //Requisitar Lista
+    try {
+        console.log(chalk.bold.blue('Requisição post /participants'))
+        const userAlreadyExiste = await database.collection('participants').findOne( {name} )
+        const usersList = await database.collection('participants').find().toArray()
+        if(userAlreadyExiste){
+            console.log(chalk.bold.red('User Already Existe'))
+            res.status(409).send('User Already Existe')
+            return
+        }
+        await database.collection("participants").insertOne(participante)
+        console.log(chalk.bold.green('participante inserido com sucesso'), participante)
+        console.log(chalk.bold.green('lista de usuarios'), usersList)
+        res.sendStatus(201)
+        } catch(err) {
+            console.log(chalk.bold.red('Erro post participantes\n'), err)
+            res.status(500).send('Erro post participantes')
+        }
+})
 
 //Get Mensagens
-app.get('/messagens', (req, res) => {
-    const limit = parseInt(req.query.limit)
-    const user = req.header.user
-    let listMesages = getMessagesList()
-    res.status(201).send(listMesages)
+app.get('/messages', async (req, res) => {
+    const {limit} = req.query
+    const {user} = req.headers
+    try{
+        let messagesList = await database.collection('messages').find().toArray()
+        let start = messagesList.length - limit
+        let end = messagesList.length
+        let limitedMessagesList = messagesList.slice(start, end)
+        let filteredMessageList = limitedMessagesList.filter(message => message.from === user || message.to === user || message.type === 'message')
+        console.log(chalk.bold.blue('Get /messages'),filteredMessageList)
+        res.status(201).send(filteredMessageList)
+    } catch (err) {
+        console.log(chalk.bold.red('erro Get',err))
+        res.status(500).send('Deu Ruim')
+    }
 } )
-
-// app.post('/messages', (req, res) => {
-//     const user = req.headers.user
-//     const message = req.body
-// })
-
-// Functions
-function registerUser(user) {
-    db.collection("users").insertOne(
-        {
-            name: `${user}`,
-            lastStatus: Date.now()
-        });
-    }
-function getMessagesList(){
-        let listMessages
-        db.collection("messages").find().toArray().then(messages => {
-            listMessages = messages // array de usuários
-        });
-        return listMessages
-    }
-function toSendMenssage(from,to,text,type){
-        db.collection("messages").insertOne(
-            {
-                from: `${from}}`,
-                to: `${to}`,
-                text: `${text}`,
-                type:`${type}`
-            });
-    }
-
-// DATABASE
-    //inserire um dado
-// db.collection("users").insertOne({
-// 	email: "joao@email.com",
-// 	password: "minha_super_senha"
-// });
-
-    //Comando para buscar no DB
-// db.coleçao.find( { oqQuero: 'pipipipopopo' } );
-    
-    //Fazendo busca no DB
-// db.collection("users").findOne({
-// 	email: "joao@email.com"
-// }).then(user => {
-// 	console.log(user); // imprimirá um objeto { "_id": ..., "email": ..., "password": ... } 
-// });
-
-    //Listar todos os documentos da coleção
-// db.collection("users").find().toArray().then(users => {
-//     console.log(users); // array de usuários
-// });

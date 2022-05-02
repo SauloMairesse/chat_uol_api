@@ -16,7 +16,7 @@
     "chalk": "^5.0.1",
     "cors": "^2.8.5",
     "express": "^4.18.0",
-    "nodemon": "^2.0.15"
+    "nodemon": "^2.0.16"
   },
   "dependencies": {
     "mongod": "^2.0.0",
