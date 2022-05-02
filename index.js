@@ -78,3 +78,41 @@ app.get('/messages', async (req, res) => {
         res.status(500).send('Deu Ruim')
     }
 } )
+
+app.post('/messages', async (req,res) => {
+    const {to, text, type} = req.body
+    const {user} = req.headers
+    const date = new Date(); // momento atual 
+    const hr = data.getHours();
+    const mn = data.getMinutes();
+    const sc = data.getSeconds();
+    const hhmmmss = [hr, mn, sc].join(':');
+    const message = {
+        to: `${to}`,
+        from: `${user}`,
+        text: `${text}`,
+        type: `${type}`,
+        time: `${hhmmmss}`
+    }
+
+console.log(hhmmmss);
+    console.log(chalk.bold.yellow(`mensagem: ${message}`))
+    //Requisitar Lista Mensagem
+    try {
+        console.log(chalk.bold.blue('post /messages'))
+        const onlineUser = await database.collection('participants').findOne( {to} )
+        const mensagemExistentes = await database.collection('messages').find().toArray()
+        if(!onlineUser){
+            console.log(chalk.bold.red('User is not online '))
+            res.status(404)
+            return
+        }
+        await database.collection("participants").insertOne(participante)
+        console.log(chalk.bold.green('mensagem enviada com sucesso'),  )
+        console.log(chalk.bold.green('mensagem salvas'), mensagemExistentes)
+        res.sendStatus(201)
+        } catch(err) {
+            console.log(chalk.bold.red('Erro post participantes\n'), err)
+            res.status(500).send('Erro post participantes')
+        }
+})
