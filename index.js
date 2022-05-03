@@ -4,7 +4,7 @@ import chalk from 'chalk'
 import { MongoClient } from 'mongodb'
 import Joi from 'joi'
 
-//JOI
+//JOI Referencias 
 
 const nameREF = Joi.object({
     name: Joi.string().required()
@@ -154,24 +154,27 @@ app.post('/status', async (req, res) => {
     const {user} = req.headers
     
     try{
-        const onlineUser = await database.collection('participants').findOne({user})
-        if(!onlineUser){
-            console.log(chalk.bold.red('Erro post Status'))
+        const isUserOnline = await database.collection('participants').findOne({user})
+        if(!isUserOnline){
+            console.log(chalk.bold.red('User not found'))
             res.sendStatus(404)
             return
         }
+        await database.collection('participants').updateOne({name: user}, {$set: {lastStatus: Date.now()}})
+        res.sendStatus(200)
     } catch (erro) {
+        console.log(chalk.bold.red('Erro update Status', erro))
         res.sendStatus(500)
     }
 } )
 
 //Delete participants
-app.delete('/message/:id', async (req, res) => {
-    const {id} = req.params;
-    try{
-        const message = await database.collection('messages').findOne({ _id: new mongodb.ObjectId(id) });
-        if(!message){
-            res.sendStatus(404)
-        }
-    } catch (err) {}
-} )
+// app.delete('/message/:id', async (req, res) => {
+//     const {id} = req.params;
+//     try{
+//         const message = await database.collection('messages').findOne({ _id: new mongodb.ObjectId(id) });
+//         if(!message){
+//             res.sendStatus(404)
+//         }
+//     } catch (err) {}
+// } )
